@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIPHER SIEM — Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-brand">CIPHER SIEM</div>
+    <div class="nav-links">
+        <a href="/" class="active">Dashboard</a>
+        <a href="/events">Events</a>
+        <a href="/alerts">Alerts <span id="alert-badge" class="badge">0</span></a>
+    </div>
+</nav>
+
+<main class="container">
+    <h1 class="page-title">Security Dashboard</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_events }}</div>
+            <div class="stat-label">Total Events</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ open_alerts }}</div>
+            <div class="stat-label">Open Alerts</div>
+        </div>
+        <div class="stat-card alert">
+            <div class="stat-value">{{ critical_alerts }}</div>
+            <div class="stat-label">Critical</div>
+        </div>
+    </div>
+
+    <section class="panel">
+        <div class="panel-header"><h2>Log Sources</h2></div>
+        <div class="sources-grid">
+            {% for source, count in sources %}
+            <div class="source-card">
+                <span class="count">{{ count }}</span>
+                <div class="label">{{ source }}</div>
+            </div>
+            {% else %}
+            <p class="empty">No events ingested yet</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Recent Alerts</h2>
+            <a href="/alerts" class="btn btn-sm">View All</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>Type</th>
+                        <th>Title</th>
+                        <th>MITRE Tactic</th>
+                        <th>Host</th>
+                        <th>Source IP</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in recent_alerts %}
+                    <tr>
+                        <td><span class="badge sev-{{ alert.severity | lower }}">{{ alert.severity }}</span></td>
+                        <td><span class="badge type-{{ alert.alert_type }}">{{ alert.alert_type }}</span></td>
+                        <td>{{ alert.title }}</td>
+                        <td>{{ alert.mitre_tactic or '—' }}</td>
+                        <td>{{ alert.hostname or '—' }}</td>
+                        <td>{{ alert.src_ip or '—' }}</td>
+                        <td>{{ alert.created_at.strftime('%Y-%m-%d %H:%M') if alert.created_at else '—' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="empty">No alerts</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

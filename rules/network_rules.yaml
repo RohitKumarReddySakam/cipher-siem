@@ -1,0 +1,57 @@
+---
+id: net-001
+name: Suspicious Outbound Port
+enabled: true
+severity: HIGH
+description: Connection to commonly abused C2 port
+mitre_tactic: Command and Control
+mitre_technique: T1571
+tags: [network, c2, suspicious-port]
+detection:
+  condition: all
+  selection:
+    dst_port: [4444, 5555, 1337, 31337, 6666, 6667, 9001, 9030]
+
+---
+id: net-002
+name: TOR Exit Node Traffic
+enabled: true
+severity: HIGH
+description: Traffic to/from known TOR exit node range
+mitre_tactic: Command and Control
+mitre_technique: T1090.003
+tags: [network, tor, anonymization]
+detection:
+  condition: all
+  selection:
+    src_ip: ["185.220.101"]
+
+---
+id: net-003
+name: DNS Tunneling Indicator
+enabled: true
+severity: MEDIUM
+description: Potential DNS tunneling — unusually long DNS query
+mitre_tactic: Exfiltration
+mitre_technique: T1048.003
+tags: [network, dns, tunneling]
+detection:
+  condition: all
+  selection:
+    message: [re:[\w\-]{30,}\.[a-z]{2,6}]
+    dst_port: [53]
+
+---
+id: net-004
+name: Web Application Attack
+enabled: true
+severity: HIGH
+description: Web attack pattern in HTTP log
+mitre_tactic: Initial Access
+mitre_technique: T1190
+tags: [web, attack, sqli, lfi]
+detection:
+  condition: all
+  selection:
+    log_source: apache
+    message: [../etc/passwd, select+from, union+select, "<script", eval(base64]

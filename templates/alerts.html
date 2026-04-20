@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIPHER SIEM — Alerts</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-brand">CIPHER SIEM</div>
+    <div class="nav-links">
+        <a href="/">Dashboard</a>
+        <a href="/events">Events</a>
+        <a href="/alerts" class="active">Alerts <span id="alert-badge" class="badge">0</span></a>
+    </div>
+</nav>
+
+<main class="container">
+    <h1 class="page-title">Security Alerts</h1>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>All Alerts <span class="count">({{ alerts | length }})</span></h2>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>Type</th>
+                        <th>Title</th>
+                        <th>MITRE Tactic</th>
+                        <th>Technique</th>
+                        <th>Host</th>
+                        <th>Source IP</th>
+                        <th>User</th>
+                        <th>Status</th>
+                        <th>Events</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr>
+                        <td><span class="badge sev-{{ alert.severity | lower }}">{{ alert.severity }}</span></td>
+                        <td><span class="badge type-{{ alert.alert_type }}">{{ alert.alert_type }}</span></td>
+                        <td>{{ alert.title }}</td>
+                        <td>{{ alert.mitre_tactic or '—' }}</td>
+                        <td>{{ alert.mitre_technique or '—' }}</td>
+                        <td>{{ alert.hostname or '—' }}</td>
+                        <td>{{ alert.src_ip or '—' }}</td>
+                        <td>{{ alert.username or '—' }}</td>
+                        <td><span class="status-{{ alert.status }}">{{ alert.status }}</span></td>
+                        <td>{{ alert.event_count }}</td>
+                        <td>{{ alert.created_at.strftime('%Y-%m-%d %H:%M') if alert.created_at else '—' }}</td>
+                        <td>
+                            {% if alert.status == 'open' %}
+                            <button class="btn btn-sm btn-danger" onclick="dismissAlert('{{ alert.id }}')">Close</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="12" class="empty">No alerts</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

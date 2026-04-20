@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIPHER SIEM — Events</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-brand">CIPHER SIEM</div>
+    <div class="nav-links">
+        <a href="/">Dashboard</a>
+        <a href="/events" class="active">Events</a>
+        <a href="/alerts">Alerts <span id="alert-badge" class="badge">0</span></a>
+    </div>
+</nav>
+
+<main class="container">
+    <h1 class="page-title">Log Events</h1>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Events <span class="count">({{ events | length }})</span></h2>
+            <div style="display:flex;gap:8px;">
+                <a href="/events?source=syslog" class="btn btn-sm">Syslog</a>
+                <a href="/events?source=windows_event" class="btn btn-sm">Windows</a>
+                <a href="/events?source=apache" class="btn btn-sm">Apache</a>
+                <a href="/events" class="btn btn-sm">All</a>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>Source</th>
+                        <th>Host</th>
+                        <th>Username</th>
+                        <th>Process</th>
+                        <th>Message</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ev in events %}
+                    <tr>
+                        <td><span class="badge sev-{{ ev.severity | lower }}">{{ ev.severity }}</span></td>
+                        <td><span class="src-badge">{{ ev.log_source }}</span></td>
+                        <td>{{ ev.hostname or '—' }}</td>
+                        <td>{{ ev.username or '—' }}</td>
+                        <td>{{ ev.process or '—' }}</td>
+                        <td class="msg-truncate" title="{{ ev.message }}">{{ ev.message }}</td>
+                        <td>{{ ev.received_at.strftime('%H:%M:%S') if ev.received_at else '—' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="empty">No events ingested</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

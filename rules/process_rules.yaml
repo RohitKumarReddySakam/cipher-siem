@@ -1,0 +1,70 @@
+---
+id: proc-001
+name: Suspicious PowerShell Execution
+enabled: true
+severity: HIGH
+description: PowerShell executed with encoded command or download cradle
+mitre_tactic: Execution
+mitre_technique: T1059.001
+tags: [powershell, execution, living-off-the-land]
+detection:
+  condition: all
+  selection:
+    process: powershell
+    message: [-enc, -encodedcommand, downloadstring, iex, invoke-expression, bypass]
+
+---
+id: proc-002
+name: Credential Dumping Tool
+enabled: true
+severity: CRITICAL
+description: Known credential dumping tool or technique detected
+mitre_tactic: Credential Access
+mitre_technique: T1003
+tags: [credential-dumping, mimikatz]
+detection:
+  condition: all
+  selection:
+    message: [mimikatz, sekurlsa, lsadump, ntlm hash, procdump lsass]
+
+---
+id: proc-003
+name: Scheduled Task Creation
+enabled: true
+severity: HIGH
+description: Scheduled task created for persistence
+mitre_tactic: Persistence
+mitre_technique: T1053
+tags: [persistence, scheduled-task]
+detection:
+  condition: all
+  selection:
+    message: [schtasks /create, at.exe, crontab -e, /etc/cron]
+
+---
+id: proc-004
+name: Service Installation
+enabled: true
+severity: HIGH
+description: New Windows service installed
+mitre_tactic: Persistence
+mitre_technique: T1543.003
+tags: [persistence, service]
+detection:
+  condition: all
+  selection:
+    event_id: [7045, 4697]
+
+---
+id: proc-005
+name: Whoami / System Discovery
+enabled: true
+severity: MEDIUM
+description: Attacker running system discovery commands
+mitre_tactic: Discovery
+mitre_technique: T1033
+tags: [discovery, recon]
+detection:
+  condition: all
+  selection:
+    message: [whoami, net user, net group, ipconfig, systeminfo]

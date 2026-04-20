@@ -1,0 +1,43 @@
+---
+id: auth-001
+name: Multiple Failed Logins
+enabled: true
+severity: HIGH
+description: Multiple failed authentication attempts detected
+mitre_tactic: Credential Access
+mitre_technique: T1110
+tags: [authentication, brute-force]
+detection:
+  condition: all
+  selection:
+    message: [failed, invalid, authentication failure, wrong password]
+    severity: [WARNING, ERROR, CRITICAL]
+
+---
+id: auth-002
+name: SSH Root Login Attempt
+enabled: true
+severity: CRITICAL
+description: Direct root login attempt via SSH
+mitre_tactic: Initial Access
+mitre_technique: T1078
+tags: [authentication, ssh, root]
+detection:
+  condition: all
+  selection:
+    message: [root, sshd]
+    log_source: syslog
+
+---
+id: auth-003
+name: Account Lockout
+enabled: true
+severity: HIGH
+description: User account has been locked out
+mitre_tactic: Credential Access
+mitre_technique: T1110.001
+tags: [authentication, lockout]
+detection:
+  condition: all
+  selection:
+    message: [locked out, account lockout, too many failures]
