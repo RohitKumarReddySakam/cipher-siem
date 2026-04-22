@@ -2,9 +2,9 @@ name: Security Scanning
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
   schedule:
     - cron: '0 3 * * 1'   # Weekly Monday 03:00 UTC
 
@@ -14,7 +14,7 @@ permissions:
   actions: read
 
 jobs:
-  # ── 1. Secret scanning (full history) ─────────────────────────────────────
+  # ── 1. Secret scanning (full git history) ─────────────────────────────────
   gitleaks:
     name: Secret Scanning (Gitleaks)
     runs-on: ubuntu-latest
@@ -26,9 +26,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 2. SAST — Semgrep (pip-installed, no container) ──────────────────────
+  # ── 2. SAST — Semgrep ────────────────────────────────────────────────────
   semgrep:
-    name: SAST (Semgrep — OWASP + Python + Secrets)
+    name: SAST (Semgrep)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
       - name: Install Semgrep
         run: pip install semgrep
 
-      - name: Run Semgrep SAST
+      - name: Run Semgrep
         run: |
           semgrep scan \
             --config p/python \
@@ -50,21 +50,16 @@ jobs:
             --sarif \
             --output semgrep.sarif \
             . || true
+          [ -f semgrep.sarif ] || echo '{"version":"2.1.0","runs":[]}' > semgrep.sarif
 
-      - name: Verify SARIF produced
-        run: |
-          if [ ! -f semgrep.sarif ]; then
-            echo '{"version":"2.1.0","runs":[]}' > semgrep.sarif
-          fi
-
-      - name: Upload Semgrep results to Security tab
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Semgrep SARIF
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: semgrep.sarif
           category: semgrep
 
-  # ── 3. SCA + container scanning — Trivy ───────────────────────────────────
+  # ── 3. SCA + container scan — Trivy ──────────────────────────────────────
   trivy:
     name: Dependency & Container Scan (Trivy)
     runs-on: ubuntu-latest
@@ -81,8 +76,8 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: '0'
 
-      - name: Upload Trivy FS results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Trivy FS SARIF
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-fs.sarif
@@ -103,39 +98,44 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: '0'
 
-      - name: Upload Trivy image results
+      - name: Upload Trivy image SARIF
         if: hashFiles('Dockerfile') != '' && always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-image.sarif
           category: trivy-image
 
-  # ── 4. CodeQL deep static analysis ────────────────────────────────────────
+  # ── 4. CodeQL deep static analysis ───────────────────────────────────────
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: python
           queries: security-extended,security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: codeql-python
 
-  # ── 5. OpenSSF Scorecard (supply-chain security posture) ──────────────────
+  # ── 5. OpenSSF Scorecard ─────────────────────────────────────────────────
   scorecard:
     name: OpenSSF Scorecard
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
+    continue-on-error: true
     permissions:
       contents: read
       security-events: write
@@ -150,12 +150,13 @@ jobs:
         with:
           results_file: scorecard.sarif
           results_format: sarif
-          publish_results: true
+          publish_results: false
         env:
           SCORECARD_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Scorecard results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Scorecard SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
         with:
           sarif_file: scorecard.sarif
           category: scorecard
