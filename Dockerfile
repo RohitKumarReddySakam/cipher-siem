@@ -2,6 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+RUN apt-get update && apt-get upgrade -y && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -u 1001 appuser
 
 COPY requirements.txt .
